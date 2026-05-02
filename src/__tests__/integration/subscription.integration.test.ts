@@ -8,25 +8,21 @@ import { runMigrations } from "../../db/migrate.js";
 describe("Subscription API Integration Tests", () => {
     let app: Express;
     let server: Server;
-    const baseURL = "http://localhost:3001";
+    const baseURL = process.env.APP_BASE_URL || `http://localhost:${process.env.PORT}`;
     let canConnectToDatabase = false;
 
     beforeAll(async () => {
-        process.env.DATABASE_URL = process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/test_releases";
-        process.env.NODE_ENV = "test";
-        process.env.REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
-        process.env.APP_BASE_URL = process.env.APP_BASE_URL || "http://localhost:3000";
-        process.env.SMTP_HOST = process.env.SMTP_HOST || "localhost";
-        process.env.SMTP_PORT = process.env.SMTP_PORT || "1025";
-        process.env.SMTP_EMAIL_FROM = process.env.SMTP_EMAIL_FROM || "test@example.com";
-        process.env.CACHE_ENABLED = "false"; // Disable cache for tests
-
         console.log("Test environment:", {
             NODE_ENV: process.env.NODE_ENV,
+            PORT: process.env.PORT,
             DATABASE_URL: process.env.DATABASE_URL?.replace(/:[^:@]*@/, ":***@"), // Hide password
             REDIS_URL: process.env.REDIS_URL,
+            APP_BASE_URL: process.env.APP_BASE_URL,
             SMTP_HOST: process.env.SMTP_HOST,
+            SMTP_PORT: process.env.SMTP_PORT,
             SMTP_EMAIL_FROM: process.env.SMTP_EMAIL_FROM,
+            SMTP_SECURE: process.env.SMTP_SECURE,
+            CACHE_ENABLED: process.env.CACHE_ENABLED,
             GITHUB_TOKEN: process.env.GITHUB_TOKEN ? "[SET]" : "[NOT SET]",
         });
 
@@ -35,7 +31,7 @@ describe("Subscription API Integration Tests", () => {
             await runMigrations();
             app = createApp();
 
-            server = app.listen(3001);
+            server = app.listen(process.env.PORT);
             canConnectToDatabase = true;
         } catch (error) {
             console.warn("Database connection failed, skipping integration tests:", error);
@@ -75,6 +71,7 @@ describe("Subscription API Integration Tests", () => {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    Origin: baseURL,
                 },
                 body: JSON.stringify(subscriptionData),
             });
@@ -110,6 +107,7 @@ describe("Subscription API Integration Tests", () => {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    Origin: `http://localhost:${process.env.PORT}`,
                 },
                 body: JSON.stringify({
                     email: "invalid-email",
@@ -139,6 +137,7 @@ describe("Subscription API Integration Tests", () => {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    Origin: baseURL,
                 },
                 body: JSON.stringify(subscriptionData),
             });
@@ -154,6 +153,7 @@ describe("Subscription API Integration Tests", () => {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    Origin: baseURL,
                 },
                 body: JSON.stringify(subscriptionData),
             });
