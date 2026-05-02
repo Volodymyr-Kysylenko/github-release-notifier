@@ -4,26 +4,27 @@ import type { Server } from "http";
 import { createApp } from "../../app.js";
 import { pool } from "../../db/pool.js";
 import { runMigrations } from "../../db/migrate.js";
+import { env } from "../../config/env.js";
 
 describe("Subscription API Integration Tests", () => {
     let app: Express;
     let server: Server;
-    const baseURL = process.env.APP_BASE_URL || `http://localhost:${process.env.PORT}`;
     let canConnectToDatabase = false;
+    const baseURL = env.APP_BASE_URL || `http://localhost:${env.PORT}`;
 
     beforeAll(async () => {
         console.log("Test environment:", {
-            NODE_ENV: process.env.NODE_ENV,
-            PORT: process.env.PORT,
-            DATABASE_URL: process.env.DATABASE_URL?.replace(/:[^:@]*@/, ":***@"), // Hide password
-            REDIS_URL: process.env.REDIS_URL,
-            APP_BASE_URL: process.env.APP_BASE_URL,
-            SMTP_HOST: process.env.SMTP_HOST,
-            SMTP_PORT: process.env.SMTP_PORT,
-            SMTP_EMAIL_FROM: process.env.SMTP_EMAIL_FROM,
-            SMTP_SECURE: process.env.SMTP_SECURE,
-            CACHE_ENABLED: process.env.CACHE_ENABLED,
-            GITHUB_TOKEN: process.env.GITHUB_TOKEN ? "[SET]" : "[NOT SET]",
+            NODE_ENV: env.NODE_ENV,
+            PORT: env.PORT,
+            DATABASE_URL: env.DATABASE_URL?.replace(/:[^:@]*@/, ":***@"), // Hide password
+            REDIS_URL: env.REDIS_URL,
+            APP_BASE_URL: env.APP_BASE_URL,
+            SMTP_HOST: env.SMTP_HOST,
+            SMTP_PORT: env.SMTP_PORT,
+            SMTP_EMAIL_FROM: env.SMTP_EMAIL_FROM,
+            SMTP_SECURE: env.SMTP_SECURE,
+            CACHE_ENABLED: env.CACHE_ENABLED,
+            GITHUB_TOKEN: env.GITHUB_TOKEN ? "[SET]" : "[NOT SET]",
         });
 
         try {
@@ -31,7 +32,7 @@ describe("Subscription API Integration Tests", () => {
             await runMigrations();
             app = createApp();
 
-            server = app.listen(process.env.PORT);
+            server = app.listen(env.PORT);
             canConnectToDatabase = true;
         } catch (error) {
             console.warn("Database connection failed, skipping integration tests:", error);
@@ -107,7 +108,7 @@ describe("Subscription API Integration Tests", () => {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Origin: `http://localhost:${process.env.PORT}`,
+                    Origin: baseURL,
                 },
                 body: JSON.stringify({
                     email: "invalid-email",
